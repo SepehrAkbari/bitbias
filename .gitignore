@@ -3,4 +3,5 @@
 .RData
 .Ruserdata
 
-QRNG/Setup.ipynb
+Data/*
+!Data/feature_vector.csv

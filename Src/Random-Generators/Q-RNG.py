@@ -34,25 +34,41 @@ def createDf(arr, max_val: int, trial_n: int, filename: str):
     for i in range(trial_n):
         n = generateInt(max_val)
         arr.append({'index': i, 'n': n})
+        if i % 50 == 0:
+            print(f"Trial {i+1}/{trial_n}")
 
     df = pd.DataFrame(arr)
     df.to_csv(filename, index=False)
 
-        
+def get_next_batch_number(data_folder: str, n_datasets: int) -> int:
+    existing_files = [f for f in os.listdir(data_folder) if f.startswith('randoms-') and f.endswith('.csv')]
+    if not existing_files:
+        return 1
+    
+    numbers = []
+    for f in existing_files:
+        num_str = f.replace('randoms-', '').replace('.csv', '')
+        numbers.append(int(num_str))
+    
+    highest_num = max(numbers)
+    return highest_num + 1
+
 def main():
     print('Starting...')
 
-    n_datasets = 10
+    n_datasets = 60
     max_val = 10
     trial_n = 500
 
     data_folder = "Data"
     os.makedirs(data_folder, exist_ok=True)
 
+    run_trial = get_next_batch_number(data_folder, n_datasets)
+
     for i in range(n_datasets):
-        print(f'Generating dataset {i+21}...')
+        print(f'Generating dataset {i+run_trial}...')
         arr = []
-        filename = os.path.join(data_folder, f'randoms-{i+1}.csv')
+        filename = os.path.join(data_folder, f'randoms-{i+run_trial}.csv')
         createDf(arr, max_val, trial_n, filename)
     
     print('\nDone!')
