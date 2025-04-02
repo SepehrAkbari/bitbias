@@ -14,7 +14,7 @@ def xorshift(seed: int, n: int) -> list:
 def generateInt(max_val: int, seed: int, index: int) -> int:
     numbers = xorshift(seed, 500)
     x = numbers[index]
-    return 1 + (x % max_val)
+    return x % (max_val + 1)
 
 def createDf(arr, max_val: int, trial_n: int, filename: str, seed: int):
     for i in range(trial_n):

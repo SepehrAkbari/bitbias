@@ -1,3 +1,4 @@
+# Package installation
 required_packages <- c("dplyr", "tidyverse")
 installed_packages <- installed.packages()[, "Package"]
 for (pkg in required_packages) {
@@ -6,32 +7,34 @@ for (pkg in required_packages) {
   }
 }
 
+# Load libraries
 library(dplyr)
 library(tidyverse)
 
+# Chi-squared test for uniformity
 chisqr_test <- function(data, min_val = 0, max_val = 10) {
-  bins <- cut(data,
-              breaks = seq(min_val, max_val,
-                           length.out = 11),
-              include.lowest = TRUE)
+  bins <- cut(data, breaks = seq(min_val, max_val + 1, by = 1), 
+              include.lowest = TRUE, right = FALSE)
   freq <- table(bins)
-  expected <- rep(length(data) / length(freq), length(freq))
+  expected <- rep(length(data) / (max_val - min_val + 1), max_val - min_val + 1)
   chi_test <- chisq.test(freq, p = expected / sum(expected))
   return(c(chisqr_p = chi_test$p.value,
            chisqr_X2 = chi_test$statistic,
            chisqr_df = chi_test$parameter))
 }
 
+# Kolmogorov-Smirnov test
 ks_test <- function(data, min_val = 0, max_val = 10) {
-  data_scaled <- (data - min(data)) / (max(data) - min(data))
-  ks_test <- ks.test(data_scaled, "punif")
+  data_scaled <- (data - min_val) / (max_val - min_val)
+  ks_test <- ks.test(data_scaled, "punif", min = 0, max = 1)
   return(c(ks_p = ks_test$p.value,
            ks_D = ks_test$statistic))
 }
 
-freq_test <- function(data, min_val = 0, max_val = 10, num_bins = 10) {
-  breaks <- seq(min(data), max(data), length.out = num_bins + 1)
-  freq <- table(cut(data, breaks = breaks, include.lowest = TRUE))
+# Frequency test with chi-squared
+freq_test <- function(data, min_val = 0, max_val = 10, num_bins = 11) {
+  breaks <- seq(min_val, max_val + 1, length.out = num_bins + 1)
+  freq <- table(cut(data, breaks = breaks, include.lowest = TRUE, right = FALSE))
   expected <- rep(length(data) / num_bins, num_bins)
   chi_test <- chisq.test(freq, p = expected / sum(expected))
   return(c(freq_p = chi_test$p.value,
@@ -39,18 +42,20 @@ freq_test <- function(data, min_val = 0, max_val = 10, num_bins = 10) {
            freq_df = chi_test$parameter))
 }
 
+# Equal distribution test
 eqdist_test <- function(data, min_val = 0, max_val = 10) {
-  data_scaled <- (data - min(data)) / (max(data) - min(data))
+  data_scaled <- (data - min_val) / (max_val - min_val)
   empirical_mean_val <- mean(data_scaled)
-  integral_f <- 0.5
-  diff <- abs(empirical_mean_val - integral_f)
+  expected_mean <- 0.5
+  diff <- abs(empirical_mean_val - expected_mean)
   return(c(eqdist_empiricalMean = empirical_mean_val,
            eqdist_diff = diff))
 }
 
-gap_test <- function(data, num_bins = 10) {
-  breaks <- seq(min(data), max(data), length.out = num_bins + 1)
-  binned <- cut(data, breaks = breaks, include.lowest = TRUE, labels = FALSE)
+# Gap test
+gap_test <- function(data, min_val = 0, max_val = 10, num_bins = 11) {
+  breaks <- seq(min_val, max_val + 1, length.out = num_bins + 1)
+  binned <- cut(data, breaks = breaks, include.lowest = TRUE, right = FALSE, labels = FALSE)
   calculate_gaps <- function(binned_data) {
     gaps_list <- list()
     for (bin in unique(binned_data)) {
@@ -63,24 +68,28 @@ gap_test <- function(data, num_bins = 10) {
     return(unlist(gaps_list))
   }
   gaps <- calculate_gaps(binned)
-  if (length(gaps) == 0) return(c(gap_p = NA,
-                                  gap_X2 = NA,
-                                  gap_df = NA))
+  if (length(gaps) == 0) {
+    return(c(gap_p = NA, gap_X2 = NA, gap_df = NA))
+  }
   gap_freq <- table(gaps)
   expected <- rep(sum(gap_freq) / length(gap_freq), length(gap_freq))
   gap_test <- chisq.test(gap_freq, p = expected / sum(expected))
-  return(c(gap_p = gap_test$p.value, 
-           gap_X2 = gap_test$statistic, 
+  return(c(gap_p = gap_test$p.value,
+           gap_X2 = gap_test$statistic,
            gap_df = gap_test$parameter))
 }
 
-serial_test <- function(data) {
-  data_scaled <- (data - min(data)) / (max(data) - min(data))
-  if (var(data) == 0) return(c(serial_autocorrelation = NA))
+# Serial correlation test
+serial_test <- function(data, min_val = 0, max_val = 10) {
+  data_scaled <- (data - min_val) / (max_val - min_val)
+  if (var(data) == 0) {
+    return(c(serial_autocorrelation = NA))
+  }
   serial_test <- cor(data_scaled[-length(data_scaled)], data_scaled[-1])
   return(c(serial_autocorrelation = serial_test))
 }
 
+# Permutation test
 permute_test <- function(data, block_size = 5) {
   calculate_statistic <- function(data, block_size) {
     num_blocks <- length(data) %/% block_size
@@ -95,29 +104,35 @@ permute_test <- function(data, block_size = 5) {
       permuted_data <- sample(data)
       calculate_statistic(permuted_data, block_size)
     })
-    p_value <- mean(abs(permuted_stats) >= abs(observed_stat))
+    p_value <- mean(abs(permuted_stats - mean(permuted_stats)) >= 
+                    abs(observed_stat - mean(permuted_stats)))
     return(c(perm_observed_stat = observed_stat, perm_p = p_value))
   }
   return(permutation_test(data, block_size))
 }
 
-entropy_test <- function(data, num_bins = 10) {
-  bins <- cut(data, breaks = num_bins, include.lowest = TRUE)
+# Entropy test
+entropy_test <- function(data, min_val = 0, max_val = 10, num_bins = 11) {
+  breaks <- seq(min_val, max_val + 1, length.out = num_bins + 1)
+  bins <- cut(data, breaks = breaks, include.lowest = TRUE, right = FALSE)
   freq_table <- table(bins)
   probabilities <- freq_table / sum(freq_table)
   entropy_value <- -sum(probabilities * log2(probabilities + 1e-10))
   return(c(entropy_val = entropy_value))
 }
 
+# Fourier transform test
 ftt_test <- function(data) {
   n <- length(data)
   fft_result <- fft(data)
   magnitudes <- Mod(fft_result)
   frequencies <- (0:(n-1)) / n
   half_n <- floor(n / 2)
-  if (half_n < 2) return(c(fft_dominant_frequency = NA,
-                           fft_dominant_period = NA,
-                           fft_max_magnitude = NA))
+  if (half_n < 2) {
+    return(c(fft_dominant_frequency = NA,
+             fft_dominant_period = NA,
+             fft_max_magnitude = NA))
+  }
   dominant_index <- which.max(magnitudes[2:(half_n + 1)]) + 1
   dominant_magnitude <- magnitudes[dominant_index]
   dominant_frequency <- frequencies[dominant_index]
@@ -128,7 +143,6 @@ ftt_test <- function(data) {
 }
 
 ### Main Function ###
-
 main <- function() {
   print("Starting feature extraction...")
   print("Current directory is:")
@@ -198,4 +212,5 @@ main <- function() {
   return(features_df)
 }
 
+# Execute main function
 main()
