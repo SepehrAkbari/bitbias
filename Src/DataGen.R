@@ -1,4 +1,3 @@
-# Package installation
 required_packages <- c("dplyr", "tidyverse")
 installed_packages <- installed.packages()[, "Package"]
 for (pkg in required_packages) {
@@ -7,11 +6,9 @@ for (pkg in required_packages) {
   }
 }
 
-# Load libraries
 library(dplyr)
 library(tidyverse)
 
-# Chi-squared test for uniformity
 chisqr_test <- function(data, min_val = 0, max_val = 10) {
   bins <- cut(data, breaks = seq(min_val, max_val + 1, by = 1), 
               include.lowest = TRUE, right = FALSE)
@@ -23,7 +20,6 @@ chisqr_test <- function(data, min_val = 0, max_val = 10) {
            chisqr_df = chi_test$parameter))
 }
 
-# Kolmogorov-Smirnov test
 ks_test <- function(data, min_val = 0, max_val = 10) {
   data_scaled <- (data - min_val) / (max_val - min_val)
   ks_test <- ks.test(data_scaled, "punif", min = 0, max = 1)
@@ -31,7 +27,6 @@ ks_test <- function(data, min_val = 0, max_val = 10) {
            ks_D = ks_test$statistic))
 }
 
-# Frequency test with chi-squared
 freq_test <- function(data, min_val = 0, max_val = 10, num_bins = 11) {
   breaks <- seq(min_val, max_val + 1, length.out = num_bins + 1)
   freq <- table(cut(data, breaks = breaks, include.lowest = TRUE, right = FALSE))
@@ -42,7 +37,6 @@ freq_test <- function(data, min_val = 0, max_val = 10, num_bins = 11) {
            freq_df = chi_test$parameter))
 }
 
-# Equal distribution test
 eqdist_test <- function(data, min_val = 0, max_val = 10) {
   data_scaled <- (data - min_val) / (max_val - min_val)
   empirical_mean_val <- mean(data_scaled)
@@ -52,7 +46,6 @@ eqdist_test <- function(data, min_val = 0, max_val = 10) {
            eqdist_diff = diff))
 }
 
-# Gap test
 gap_test <- function(data, min_val = 0, max_val = 10, num_bins = 11) {
   breaks <- seq(min_val, max_val + 1, length.out = num_bins + 1)
   binned <- cut(data, breaks = breaks, include.lowest = TRUE, right = FALSE, labels = FALSE)
@@ -79,7 +72,6 @@ gap_test <- function(data, min_val = 0, max_val = 10, num_bins = 11) {
            gap_df = gap_test$parameter))
 }
 
-# Serial correlation test
 serial_test <- function(data, min_val = 0, max_val = 10) {
   data_scaled <- (data - min_val) / (max_val - min_val)
   if (var(data) == 0) {
@@ -89,7 +81,6 @@ serial_test <- function(data, min_val = 0, max_val = 10) {
   return(c(serial_autocorrelation = serial_test))
 }
 
-# Permutation test
 permute_test <- function(data, block_size = 5) {
   calculate_statistic <- function(data, block_size) {
     num_blocks <- length(data) %/% block_size
@@ -111,7 +102,6 @@ permute_test <- function(data, block_size = 5) {
   return(permutation_test(data, block_size))
 }
 
-# Entropy test
 entropy_test <- function(data, min_val = 0, max_val = 10, num_bins = 11) {
   breaks <- seq(min_val, max_val + 1, length.out = num_bins + 1)
   bins <- cut(data, breaks = breaks, include.lowest = TRUE, right = FALSE)
@@ -121,7 +111,6 @@ entropy_test <- function(data, min_val = 0, max_val = 10, num_bins = 11) {
   return(c(entropy_val = entropy_value))
 }
 
-# Fourier transform test
 ftt_test <- function(data) {
   n <- length(data)
   fft_result <- fft(data)
@@ -142,7 +131,6 @@ ftt_test <- function(data) {
            fft_max_magnitude = dominant_magnitude))
 }
 
-### Main Function ###
 main <- function() {
   print("Starting feature extraction...")
   print("Current directory is:")
@@ -212,5 +200,4 @@ main <- function() {
   return(features_df)
 }
 
-# Execute main function
 main()
