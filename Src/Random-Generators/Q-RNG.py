@@ -2,15 +2,18 @@ import os
 from qiskit import QuantumCircuit
 from qiskit_aer import Aer
 from qiskit import transpile
+from qiskit_ibm_runtime import QiskitRuntimeService
 import pandas as pd
 from math import ceil, log2
 
 def generateBit() -> int:
+    service = QiskitRuntimeService()
+
     qc = QuantumCircuit(1, 1)
     qc.h(0)
     qc.measure(0, 0)
 
-    backend = Aer.get_backend('qasm_simulator')
+    backend = service.get_backend("ibm_brisbane")
     transpiled_qc = transpile(qc, backend)
     job = backend.run(transpiled_qc)
     result = job.result()
@@ -54,8 +57,6 @@ def get_next_batch_number(data_folder: str, n_datasets: int) -> int:
     return highest_num + 1
 
 def main():
-    print('Starting...')
-
     n_datasets = 60
     max_val = 10
     trial_n = 500
@@ -70,8 +71,6 @@ def main():
         arr = []
         filename = os.path.join(data_folder, f'randoms-{i+run_trial}.csv')
         createDf(arr, max_val, trial_n, filename)
-    
-    print('\nDone!')
 
 if __name__ == '__main__':
     main()

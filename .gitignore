@@ -2,6 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
+.Rproj
+*.Rproj
 
-Data/*
-!Data/feature_vector.csv
+Notebooks/Other
